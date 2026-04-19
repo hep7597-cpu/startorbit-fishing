@@ -288,7 +288,8 @@ const Game = {
     },
 
     chooseFishTypeIndex() {
-        const hasShark = this.fishContainer.children.some(f => !f.isDead && !f.captured && (f.typeIndex === 11 || f.typeIndex === 12));
+        // 确保屏幕上同时只会出现一条鲨鱼，包括正在播放捕获动画的鲨鱼
+        const hasShark = this.fishContainer.children.some(f => !f.isDead && (f.typeIndex === 11 || f.typeIndex === 12));
 
         const candidates = [
             { typeIndex: 1, weight: 65 },
@@ -301,14 +302,15 @@ const Game = {
             { typeIndex: 8, weight: 10 },
             { typeIndex: 9, weight: 3 },
             { typeIndex: 10, weight: 2 },
-            { typeIndex: 11, weight: hasShark ? 0 : 1 },
-            { typeIndex: 12, weight: hasShark ? 0 : 0.5 }
+            { typeIndex: 11, weight: hasShark ? 0 : 5 }, // 调整鲨鱼权重，增加出现频率
+            { typeIndex: 12, weight: hasShark ? 0 : 2 }
         ];
 
         let totalWeight = 0;
 
         for (const candidate of candidates) {
-            if (candidate.typeIndex === this.lastSpawnTypeIndex) {
+            // 只有当初始权重大于0时，才进行连续生成的概率衰减逻辑
+            if (candidate.weight > 0 && candidate.typeIndex === this.lastSpawnTypeIndex) {
                 candidate.weight = this.repeatedSpawnTypeCount >= 1
                     ? 0
                     : Math.max(2, Math.floor(candidate.weight * 0.35));

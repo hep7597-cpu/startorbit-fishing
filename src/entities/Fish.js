@@ -6,7 +6,7 @@ class Fish extends PIXI.Container {
         4: { id: "fish4", coin: 8, rarity: 4, speed: 1.5, frames: 4, captureFrames: 4, width: 77, height: 59, regX: 57, regY: 18, collRect: [10, 5, 67, 23] },
         5: { id: "fish5", coin: 10, rarity: 5, speed: 1.2, frames: 4, captureFrames: 4, width: 107, height: 122, regX: 67, regY: 50, collRect: [20, 30, 80, 40] },
         6: { id: "fish6", coin: 20, rarity: 6, speed: 1.2, frames: 8, captureFrames: 4, width: 105, height: 79, regX: 65, regY: 25, collRect: [45, 0, 60, 55] },
-        7: { id: "fish7", coin: 30, rarity: 7, speed: 1.0, frames: 6, captureFrames: 4, width: 92, height: 151, regX: 40, regY: 50, collRect: [15, 5, 70, 75], rotationOffset: Math.PI / 2 },
+        7: { id: "fish7", coin: 30, rarity: 7, speed: 1.0, frames: 6, captureFrames: 4, width: 92, height: 151, regX: 40, regY: 50, collRect: [15, 5, 70, 75] },
         8: { id: "fish8", coin: 40, rarity: 8, speed: 1.0, frames: 8, captureFrames: 4, width: 174, height: 126, regX: 90, regY: 50, collRect: [20, 20, 100, 55] },
         9: { id: "fish9", coin: 50, rarity: 9, speed: 0.8, frames: 8, captureFrames: 4, width: 166, height: 183, regX: 120, regY: 70, collRect: [60, 10, 100, 130] },
         10: { id: "fish10", coin: 60, rarity: 10, speed: 0.8, frames: 6, captureFrames: 4, width: 178, height: 187, regX: 100, regY: 80, collRect: [20, 30, 150, 90] },
@@ -37,10 +37,6 @@ class Fish extends PIXI.Container {
         this.sprite.animationSpeed = 0.1 * this.animationSpeedMultiplier;
         this.sprite.play();
         this.sprite.anchor.set(this.type.regX / this.type.width, this.type.regY / this.type.height);
-
-        if (this.type.rotationOffset) {
-            this.sprite.rotation = this.type.rotationOffset;
-        }
 
         this.addChild(this.sprite);
 
@@ -83,6 +79,16 @@ class Fish extends PIXI.Container {
 
         this.x += Math.cos(this.rotation) * movementSpeed * delta;
         this.y += Math.sin(this.rotation) * movementSpeed * delta;
+
+        // 保持鱼永远背部朝上 (右侧游动 cos > 0, 左侧游动 cos < 0)
+        // 向左游时垂直翻转精灵，使其看起来是正的
+        const isHeadingLeft = Math.cos(this.rotation) < 0;
+        this.sprite.scale.y = isHeadingLeft ? -1 : 1;
+
+        // 处理特殊的初始旋转偏移
+        if (this.type.rotationOffset) {
+            this.sprite.rotation = isHeadingLeft ? -this.type.rotationOffset : this.type.rotationOffset;
+        }
 
         const leftBound = -200;
         const rightBound = Game.width + 200;

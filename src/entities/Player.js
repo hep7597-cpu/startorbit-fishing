@@ -11,6 +11,9 @@ class Player {
         this.cannon.y = Game.height - 10;
         this.container.addChild(this.cannon);
 
+        this.accuracyBar = new AccuracyBar();
+        this.container.addChild(this.accuracyBar);
+
         this.setupUI();
         this.bindBagState();
     }
@@ -22,6 +25,7 @@ class Player {
         this.minusBtn.on('pointerdown', (e) => {
             e.stopPropagation();
             this.cannon.setPower(this.cannon.power - 1);
+            this.accuracyBar.setPower(this.cannon.power);
             AudioManager.playUI();
         });
 
@@ -31,6 +35,7 @@ class Player {
         this.plusBtn.on('pointerdown', (e) => {
             e.stopPropagation();
             this.cannon.setPower(this.cannon.power + 1);
+            this.accuracyBar.setPower(this.cannon.power);
             AudioManager.playUI();
         });
 
@@ -59,6 +64,9 @@ class Player {
 
         this.plusBtn.x = width / 2 + 125;
         this.plusBtn.y = height - 35;
+
+        this.accuracyBar.x = width / 2 + 268;
+        this.accuracyBar.y = height - 17;
 
         this.coinText.x = width / 2 - 360;
         this.coinText.y = height - 27;
@@ -99,7 +107,10 @@ class Player {
 
         this.cannon.fire(rotation);
 
+        const accuracy = this.accuracyBar.getAccuracy();
+        this.accuracyBar.showFeedback(accuracy);
         const bullet = new Bullet(this.cannon.power, rotation);
+        bullet.accuracyMult = accuracy;
         bullet.x = this.cannon.x;
         bullet.y = this.cannon.y;
         this.bullets.push(bullet);
@@ -165,6 +176,10 @@ class Player {
     }
 
     updateBullets(delta) {
+        if (this.accuracyBar) {
+            this.accuracyBar.update(delta);
+        }
+
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const b = this.bullets[i];
             b.update(delta);

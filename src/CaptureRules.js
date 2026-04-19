@@ -2,7 +2,7 @@ class CaptureRules {
     static highPowerCap = 0.9;
     static rarityWeight = 20; // 稀有度权重分母
 
-    static getSingleCaptureChance({ bulletPower, fishCoin, fishRarity }) {
+    static getSingleCaptureChance({ bulletPower, fishCoin, fishRarity, accuracyMult = 1.0 }) {
         const normalizedBulletPower = Number(bulletPower || 0);
         const normalizedFishCoin = Number(fishCoin || 0);
         const normalizedFishRarity = Number(fishRarity || 1);
@@ -22,14 +22,18 @@ class CaptureRules {
         // 应用全局最高命中率上限 (90%)
         captureChance = Math.min(captureChance, CaptureRules.highPowerCap);
 
+        // 应用准度衰减
+        captureChance *= accuracyMult;
+
         return Math.max(0, captureChance);
     }
 
-    static getFishCaptureChance(bulletPower, fishType = {}) {
+    static getFishCaptureChance(bulletPower, fishType = {}, accuracyMult = 1.0) {
         return CaptureRules.getSingleCaptureChance({
             bulletPower,
             fishCoin: fishType.coin,
-            fishRarity: fishType.rarity
+            fishRarity: fishType.rarity,
+            accuracyMult
         });
     }
 }

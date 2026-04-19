@@ -21,6 +21,7 @@ class Bullet extends PIXI.Sprite {
         this.rotation = rotation;
         this.speed = 10;
         this.isDead = false;
+        this.accuracyMult = 1.0;
     }
 
     update(delta) {
@@ -60,7 +61,7 @@ class Bullet extends PIXI.Sprite {
             throw new Error('CaptureRules is unavailable.');
         }
 
-        return captureRules.getFishCaptureChance(this.power, fish?.type);
+        return captureRules.getFishCaptureChance(this.power, fish?.type, this.accuracyMult);
     }
 
     getWebRadius() {

@@ -1,17 +1,17 @@
 class Fish extends PIXI.Container {
     static types = {
-        1: { id: "fish1", coin: 2, rarity: 1, powerLevel: 1, captureRate: 0.50, speed: 1.5, frames: 4, captureFrames: 4, width: 55, height: 37, regX: 35, regY: 12, collRect: [10, 5, 45, 17] },
-        2: { id: "fish2", coin: 3, rarity: 1, powerLevel: 2, captureRate: 0.40, speed: 1.5, frames: 4, captureFrames: 4, width: 78, height: 64, regX: 58, regY: 20, collRect: [15, 10, 63, 22] },
-        3: { id: "fish3", coin: 5, rarity: 2, powerLevel: 3, captureRate: 0.35, speed: 1.5, frames: 4, captureFrames: 4, width: 72, height: 56, regX: 52, regY: 18, collRect: [5, 5, 67, 23] },
-        4: { id: "fish4", coin: 8, rarity: 2, powerLevel: 3, captureRate: 0.30, speed: 1.5, frames: 4, captureFrames: 4, width: 77, height: 59, regX: 57, regY: 18, collRect: [10, 5, 67, 23] },
-        5: { id: "fish5", coin: 10, rarity: 3, powerLevel: 4, captureRate: 0.25, speed: 1.2, frames: 4, captureFrames: 4, width: 107, height: 122, regX: 67, regY: 50, collRect: [20, 30, 80, 40] },
-        6: { id: "fish6", coin: 20, rarity: 3, powerLevel: 5, captureRate: 0.20, speed: 1.2, frames: 8, captureFrames: 4, width: 105, height: 79, regX: 65, regY: 25, collRect: [45, 0, 60, 55] },
-        7: { id: "fish7", coin: 30, rarity: 4, powerLevel: 5, captureRate: 0.15, speed: 1.0, frames: 6, captureFrames: 4, width: 92, height: 151, regX: 40, regY: 50, collRect: [15, 5, 70, 75], rotationOffset: Math.PI / 2 },
-        8: { id: "fish8", coin: 40, rarity: 4, powerLevel: 6, captureRate: 0.10, speed: 1.0, frames: 8, captureFrames: 4, width: 174, height: 126, regX: 90, regY: 50, collRect: [20, 20, 100, 55] },
-        9: { id: "fish9", coin: 50, rarity: 5, powerLevel: 6, captureRate: 0.08, speed: 0.8, frames: 8, captureFrames: 4, width: 166, height: 183, regX: 120, regY: 70, collRect: [60, 10, 100, 130] },
-        10: { id: "fish10", coin: 60, rarity: 5, powerLevel: 7, captureRate: 0.06, speed: 0.8, frames: 6, captureFrames: 4, width: 178, height: 187, regX: 100, regY: 80, collRect: [20, 30, 150, 90] },
-        11: { id: "shark1", coin: 100, rarity: 6, powerLevel: 8, captureRate: 0.04, speed: 0.6, frames: 8, captureFrames: 4, width: 509, height: 270, regX: 350, regY: 130, collRect: [20, 50, 480, 170] },
-        12: { id: "shark2", coin: 200, rarity: 7, powerLevel: 9, captureRate: 0.02, speed: 0.5, frames: 8, captureFrames: 4, width: 516, height: 273, regX: 350, regY: 130, collRect: [20, 50, 480, 170] }
+        1: { id: "fish1", coin: 2, rarity: 1, speed: 1.5, frames: 4, captureFrames: 4, width: 55, height: 37, regX: 35, regY: 12, collRect: [10, 5, 45, 17] },
+        2: { id: "fish2", coin: 3, rarity: 2, speed: 1.5, frames: 4, captureFrames: 4, width: 78, height: 64, regX: 58, regY: 20, collRect: [15, 10, 63, 22] },
+        3: { id: "fish3", coin: 5, rarity: 3, speed: 1.5, frames: 4, captureFrames: 4, width: 72, height: 56, regX: 52, regY: 18, collRect: [5, 5, 67, 23] },
+        4: { id: "fish4", coin: 8, rarity: 4, speed: 1.5, frames: 4, captureFrames: 4, width: 77, height: 59, regX: 57, regY: 18, collRect: [10, 5, 67, 23] },
+        5: { id: "fish5", coin: 10, rarity: 5, speed: 1.2, frames: 4, captureFrames: 4, width: 107, height: 122, regX: 67, regY: 50, collRect: [20, 30, 80, 40] },
+        6: { id: "fish6", coin: 20, rarity: 6, speed: 1.2, frames: 8, captureFrames: 4, width: 105, height: 79, regX: 65, regY: 25, collRect: [45, 0, 60, 55] },
+        7: { id: "fish7", coin: 30, rarity: 7, speed: 1.0, frames: 6, captureFrames: 4, width: 92, height: 151, regX: 40, regY: 50, collRect: [15, 5, 70, 75], rotationOffset: Math.PI / 2 },
+        8: { id: "fish8", coin: 40, rarity: 8, speed: 1.0, frames: 8, captureFrames: 4, width: 174, height: 126, regX: 90, regY: 50, collRect: [20, 20, 100, 55] },
+        9: { id: "fish9", coin: 50, rarity: 9, speed: 0.8, frames: 8, captureFrames: 4, width: 166, height: 183, regX: 120, regY: 70, collRect: [60, 10, 100, 130] },
+        10: { id: "fish10", coin: 60, rarity: 10, speed: 0.8, frames: 6, captureFrames: 4, width: 178, height: 187, regX: 100, regY: 80, collRect: [20, 30, 150, 90] },
+        11: { id: "shark1", coin: 100, rarity: 11, speed: 0.6, frames: 8, captureFrames: 4, width: 509, height: 270, regX: 350, regY: 130, collRect: [20, 50, 480, 170] },
+        12: { id: "shark2", coin: 200, rarity: 11, speed: 0.5, frames: 8, captureFrames: 4, width: 516, height: 273, regX: 350, regY: 130, collRect: [20, 50, 480, 170] }
     };
 
     constructor(typeIndex, spawnOptions = {}) {

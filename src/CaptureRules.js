@@ -1,36 +1,35 @@
 class CaptureRules {
     static highPowerCap = 0.9;
-    static levelPenaltyRate = 0.75;
+    static rarityWeight = 20; // 稀有度权重分母
 
-    static getSingleCaptureChance({ bulletPower, fishCoin, fishPowerLevel }) {
+    static getSingleCaptureChance({ bulletPower, fishCoin, fishRarity }) {
         const normalizedBulletPower = Number(bulletPower || 0);
         const normalizedFishCoin = Number(fishCoin || 0);
-        const normalizedFishPowerLevel = Number(fishPowerLevel || 1);
+        const normalizedFishRarity = Number(fishRarity || 1);
 
         if (normalizedBulletPower <= 0 || normalizedFishCoin <= 0) {
             return 0;
         }
 
-        const economyChance = Math.min(1, normalizedBulletPower / normalizedFishCoin);
-        const levelDelta = normalizedFishPowerLevel - normalizedBulletPower;
-        const levelPenalty = levelDelta > 0
-            ? Math.pow(CaptureRules.levelPenaltyRate, levelDelta)
-            : 1;
+        // 基础经济概率 (炮等级/鱼价值)
+        const economyChance = normalizedBulletPower / normalizedFishCoin;
+        // 稀有度衰减项 (稀有度/20)
+        const rarityDecay = normalizedFishRarity / CaptureRules.rarityWeight;
+        
+        // 公式：经济概率 - 稀有度衰减，并附加 1% 的保底概率
+        let captureChance = Math.max(0.01, economyChance - rarityDecay);
 
-        let captureChance = economyChance * levelPenalty;
+        // 应用全局最高命中率上限 (90%)
+        captureChance = Math.min(captureChance, CaptureRules.highPowerCap);
 
-        if (normalizedBulletPower > normalizedFishPowerLevel) {
-            captureChance = Math.min(captureChance, CaptureRules.highPowerCap);
-        }
-
-        return Math.max(0, Math.min(1, captureChance));
+        return Math.max(0, captureChance);
     }
 
     static getFishCaptureChance(bulletPower, fishType = {}) {
         return CaptureRules.getSingleCaptureChance({
             bulletPower,
             fishCoin: fishType.coin,
-            fishPowerLevel: fishType.powerLevel
+            fishRarity: fishType.rarity
         });
     }
 }

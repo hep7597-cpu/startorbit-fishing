@@ -1,6 +1,6 @@
 # Fishing Joy - Juego WebGL Oficial de Alto Rendimiento para GGEMU.COM
 
-[![English](./README.md)](./README.md) | [![中文](./README.zh.md)](./README.zh.md) | [![日本語](./README.ja.md)](./README.ja.md) | [![Español](./README.es.md)](./README.es.md)
+[🇬🇧 English](./README.md) | [🇨🇳 中文](./README.zh.md) | [🇯🇵 日本語](./README.ja.md) | [🇪🇸 Español](./README.es.md)
 
 Este proyecto es un juego de Pesca (Fishing Joy) de nivel profesional desarrollado específicamente para la plataforma **[GGEMU.COM](https://ggemu.com/es)**. Demuestra cómo construir juegos WebGL de alto rendimiento utilizando **PixiJS v8** e integrar perfectamente el **GGEMU SDK** para funciones sociales y económicas.
 

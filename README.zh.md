@@ -1,6 +1,6 @@
 # 欢乐捕鱼 (Fishing Joy) - GGEMU 官方深度定制 WebGL 捕鱼游戏
 
-[![English](./README.md)](./README.md) | [![中文](./README.zh.md)](./README.zh.md) | [![日本語](./README.ja.md)](./README.ja.md) | [![Español](./README.es.md)](./README.es.md)
+[🇬🇧 English](./README.md) | [🇨🇳 中文](./README.zh.md) | [🇯🇵 日本語](./README.ja.md) | [🇪🇸 Español](./README.es.md)
 
 本项目是专为 **[GGEMU.COM](https://ggemu.com/zh-CN)** 游戏平台开发的工业级捕鱼游戏示例。通过本项目，您可以深入了解如何利用 **PixiJS v8** 构建高性能 WebGL 游戏，并无缝集成 **GGEMU SDK** 核心社交与经济体系。
 

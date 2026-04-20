@@ -3,38 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Fishing Joy - Ultimate WebGL Fishing Experience | GGEMU.COM</title>
-    <meta name="description" content="Experience the ultimate high-performance WebGL fishing game. Powered by GGEMU SDK, PixiJS v8 and Tone.js. Play now on GGEMU.COM and earn GCoin!">
-    <meta name="keywords" content="Fishing Joy, WebGL Game, PixiJS v8, Tone.js, GGEMU SDK, GCoin, Retro Games, Browser Game, 捕鱼游戏">
-    <link rel="canonical" href="https://imtonyjaa.github.io/ggemu-fishing-joy/" />
+    <title>StarOrbit 捕鱼达人</title>
+    <meta name="description" content="StarOrbit AI 出品 — 高性能 WebGL 捕鱼游戏，基于 PixiJS v8">
+
+    <!-- Telegram Mini App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- PixiJS & Tone.js -->
+    <script src="https://pixijs.download/v8.1.0/pixi.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         html, body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
+            margin: 0; padding: 0;
+            background: #000;
             overflow: hidden;
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
+            /* 适配 Telegram 主题色 */
+            color-scheme: dark;
         }
         #game-container {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
         }
+
+        /* 充值按钮（右上角悬浮） */
+        #recharge-btn {
+            position: fixed;
+            top: 12px; right: 12px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(255,165,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        #recharge-btn:active { transform: scale(0.95); }
+
+        /* 规则说明弹窗 */
+        #rules-modal {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        #rules-modal.show { display: flex; }
+        #rules-box {
+            background: #0d2137;
+            border: 1px solid #FFD700;
+            border-radius: 16px;
+            padding: 24px 20px;
+            max-width: 320px;
+            width: 90%;
+            color: #fff;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+        #rules-box h2 {
+            color: #FFD700;
+            margin: 0 0 12px;
+            font-size: 16px;
+            text-align: center;
+        }
+        #rules-box table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+        }
+        #rules-box td {
+            padding: 3px 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        #rules-box td:first-child { color: #FFD700; width: 50%; }
+        #close-rules {
+            display: block;
+            margin: 16px auto 0;
+            background: #FFD700;
+            color: #000;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 32px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
     </style>
-    <script src="https://pixijs.download/v8.1.0/pixi.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
 <body>
     <div id="game-container"></div>
+
+    <!-- 充值 + 规则按钮 -->
+    <button id="recharge-btn" onclick="StarOrbitBridge.openRecharge()">
+        💰 充值
+    </button>
+
+    <!-- 规则弹窗 -->
+    <div id="rules-modal">
+        <div id="rules-box">
+            <h2>⭐ StarOrbit 捕鱼 — 金币规则</h2>
+            <table>
+                <tr><td>新用户福利</td><td>🎁 送 200 金币</td></tr>
+                <tr><td>每日登录</td><td>🗓 送 30 金币</td></tr>
+            </table>
+            <table>
+                <tr><td colspan="2" style="color:#FFD700;font-weight:bold">子弹消耗</td></tr>
+                <tr><td>1-2级炮</td><td>1-2 金币/发</td></tr>
+                <tr><td>3级炮</td><td>5 金币/发</td></tr>
+                <tr><td>4级炮</td><td>10 金币/发</td></tr>
+                <tr><td>5级炮</td><td>20 金币/发</td></tr>
+            </table>
+            <table>
+                <tr><td colspan="2" style="color:#FFD700;font-weight:bold">捕鱼奖励</td></tr>
+                <tr><td>小鱼</td><td>3-10 金币</td></tr>
+                <tr><td>中鱼</td><td>15-30 金币</td></tr>
+                <tr><td>大鱼</td><td>40-100 金币</td></tr>
+                <tr><td>🦈 鲨鱼</td><td>150-300 金币</td></tr>
+            </table>
+            <table>
+                <tr><td colspan="2" style="color:#FFD700;font-weight:bold">充值</td></tr>
+                <tr><td>1 USDT</td><td>1,000 金币</td></tr>
+                <tr><td>5 USDT</td><td>5,500 金币 (+10%)</td></tr>
+                <tr><td>10 USDT</td><td>12,000 金币 (+20%)</td></tr>
+            </table>
+            <button id="close-rules" onclick="document.getElementById('rules-modal').classList.remove('show')">
+                开始游戏 🎮
+            </button>
+        </div>
+    </div>
+
+    <!-- 配置后端地址（部署后改为实际地址） -->
+    <script>
+        window.STARORBIT_API_BASE = 'http://187.127.106.123:8888';
+    </script>
+
+    <!-- 游戏脚本 -->
     <script src="src/ResourceManager.js"></script>
     <script src="src/AudioManager.js"></script>
-    <script src="src/GgemuBridge.js"></script>
+    <script src="src/StarOrbitBridge.js"></script>
     <script src="src/WaterFilter.js"></script>
     <script src="src/CaptureRules.js"></script>
     <script src="src/FishFormation.js"></script>
@@ -44,5 +161,14 @@
     <script src="src/entities/AccuracyBar.js"></script>
     <script src="src/entities/Player.js"></script>
     <script src="src/Main.js"></script>
+
+    <script>
+        // 新用户首次进入显示规则弹窗
+        const key = 'starorbit_rules_shown';
+        if (!localStorage.getItem(key)) {
+            localStorage.setItem(key, '1');
+            document.getElementById('rules-modal').classList.add('show');
+        }
+    </script>
 </body>
 </html>

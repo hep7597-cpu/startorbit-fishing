@@ -163,9 +163,15 @@ const StarOrbitBridge = {
     openRecharge() {
         const tg = window.Telegram?.WebApp;
         if (tg) {
-            tg.openTelegramLink('https://t.me/StarOrbitAI007_bot?start=recharge');
+            // 先尝试 openTelegramLink，失败则用 openLink
+            try {
+                tg.openTelegramLink('https://t.me/StarOrbitAI007_bot?start=recharge');
+                setTimeout(() => tg.close(), 300);
+            } catch (e) {
+                window.open('https://t.me/StarOrbitAI007_bot?start=recharge', '_blank');
+            }
         } else {
-            alert('请在 Telegram 中打开以充值');
+            window.open('https://t.me/StarOrbitAI007_bot?start=recharge', '_blank');
         }
     },
 

@@ -44,10 +44,13 @@ class Player {
         this.coinText = new PIXI.Text({
             text: this.getDisplayedCoins().toString().padStart(6, '0'),
             style: {
-                fill: '#000000',
-                fontSize: 20,
+                fill: '#FFD700',
+                fontSize: 18,
                 fontWeight: 'bold',
-                letterSpacing: 12
+                letterSpacing: 2,
+                dropShadow: true,
+                dropShadowColor: '#000000',
+                dropShadowDistance: 1
             }
         });
         this.container.addChild(this.coinText);
@@ -68,8 +71,8 @@ class Player {
         this.accuracyBar.x = width / 2 + 268;
         this.accuracyBar.y = height - 17;
 
-        this.coinText.x = width / 2 - 360;
-        this.coinText.y = height - 27;
+        this.coinText.x = 10;
+        this.coinText.y = height - 30;
     }
 
     bindBagState() {

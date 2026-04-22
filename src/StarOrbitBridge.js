@@ -94,9 +94,17 @@ const StarOrbitBridge = {
                 this.emitCoins();
                 return { coins: this.coins, success: true };
             } catch (err) {
-                console.warn('[StarOrbit] useCoins 失败:', err);
-                this.emitCoins();
-                return { coins: this.coins, success: false };
+                console.warn('[StarOrbit] useCoins API失败，降级本地模式:', err);
+                // 降级到本地模式：直接扣除金币
+                if (this.coins >= amount) {
+                    this.coins -= amount;
+                    this.emitCoins();
+                    return { coins: this.coins, success: true };
+                } else {
+                    console.warn('[StarOrbit] 本地金币不足:', this.coins, '<', amount);
+                    this.emitCoins();
+                    return { coins: this.coins, success: false };
+                }
             }
         });
     },
@@ -110,8 +118,9 @@ const StarOrbitBridge = {
                 });
                 this.coins = resp.coins;
             } catch (err) {
-                // 失败回滚：不加金币
-                console.warn('[StarOrbit] addCoins 失败，不入账:', err);
+                console.warn('[StarOrbit] addCoins API失败，降级本地模式:', err);
+                // 降级到本地模式：直接增加金币
+                this.coins += amount;
             }
 
             this.emitCoins();

@@ -85,32 +85,24 @@ const StarOrbitBridge = {
     // ── 金币操作 ─────────────────────────────────────────────────
     async useCoins(amount) {
         return this._enqueue(async () => {
-            // 乐观更新（先扣，失败回滚）
-            this.coins = Math.max(0, this.coins - amount);
-            this.emitCoins();
-
             try {
                 const resp = await this._fetch('/game/spend', {
                     method: 'POST',
                     body: JSON.stringify({ user_id: this.tgUser.id, amount })
                 });
                 this.coins = resp.coins;
+                this.emitCoins();
+                return { coins: this.coins, success: true };
             } catch (err) {
-                // 失败回滚
-                this.coins += amount;
-                console.warn('[StarOrbit] useCoins 失败，已回滚:', err);
+                console.warn('[StarOrbit] useCoins 失败:', err);
+                this.emitCoins();
+                return { coins: this.coins, success: false };
             }
-
-            this.emitCoins();
-            return { coins: this.coins };
         });
     },
 
     async addCoins(amount) {
         return this._enqueue(async () => {
-            this.coins += amount;
-            this.emitCoins();
-
             try {
                 const resp = await this._fetch('/game/earn', {
                     method: 'POST',
@@ -118,7 +110,8 @@ const StarOrbitBridge = {
                 });
                 this.coins = resp.coins;
             } catch (err) {
-                console.warn('[StarOrbit] addCoins 失败:', err);
+                // 失败回滚：不加金币
+                console.warn('[StarOrbit] addCoins 失败，不入账:', err);
             }
 
             this.emitCoins();

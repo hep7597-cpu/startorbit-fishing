@@ -1,10 +1,21 @@
 class Player {
+    // 炮弹等级 → 实际金币消耗映射表
+    static POWER_COST = {
+        1: 1,
+        2: 2,
+        3: 5,
+        4: 10,
+        5: 20,
+        6: 30,
+        7: 50
+    };
+
     constructor() {
         this.container = new PIXI.Container();
-        this.localCoins = 1000;
-        this.pendingBagSpend = 0;
+        this.localCoins = 0; // 离线模式金币（不再默认给1000）
         this.pendingBagReward = 0;
         this.bullets = [];
+        this._firelock = false; // 防止连射穿透
 
         this.cannon = new Cannon();
         this.cannon.x = Game.width / 2;
@@ -87,23 +98,49 @@ class Player {
         this.renderCoins();
     }
 
+    /** 获取当前炮弹的金币消耗 */
+    getCurrentCost() {
+        return Player.POWER_COST[this.cannon.power] || this.cannon.power;
+    }
+
     getDisplayedCoins() {
         if (!window.GgemuBridge || !GgemuBridge.isBagEnabled()) {
             return this.localCoins;
         }
 
-        return Math.max(0, GgemuBridge.getBagCoins() - this.pendingBagSpend + this.pendingBagReward);
+        return Math.max(0, GgemuBridge.getBagCoins() + this.pendingBagReward);
     }
 
     renderCoins() {
         this.coinText.text = this.getDisplayedCoins().toString().padStart(6, '0');
     }
 
-    fire(targetGlobalPos) {
-        const canFire = this.consumeCoins(this.cannon.power);
+    async fire(targetGlobalPos) {
+        // 1. Bridge未初始化完成前禁止射击
+        if (window.GgemuBridge && !GgemuBridge.isBagEnabled()) {
+            return;
+        }
 
-        if (!canFire) return;
+        // 2. 防连射锁
+        if (this._firelock) return;
 
+        const cost = this.getCurrentCost();
+
+        // 3. 余额不足检查
+        if (this.getDisplayedCoins() < cost) {
+            return;
+        }
+
+        // 4. 先扣后射
+        this._firelock = true;
+
+        const canFire = await this.consumeCoins(cost);
+        if (!canFire) {
+            this._firelock = false;
+            return;
+        }
+
+        // 5. 扣费成功，发射子弹
         const dx = targetGlobalPos.x - this.cannon.x;
         const dy = targetGlobalPos.y - this.cannon.y;
         const rotation = Math.atan2(dy, dx) + Math.PI / 2;
@@ -119,37 +156,32 @@ class Player {
         this.bullets.push(bullet);
         Game.app.stage.addChild(bullet);
 
-        Game.coinsSpentSinceLastSchool = (Game.coinsSpentSinceLastSchool || 0) + this.cannon.power;
+        Game.coinsSpentSinceLastSchool = (Game.coinsSpentSinceLastSchool || 0) + cost;
+
+        this._firelock = false;
     }
 
-    consumeCoins(amount) {
+    async consumeCoins(amount) {
+        // 离线模式（无Bridge或Bridge未就绪）
         if (!window.GgemuBridge || !GgemuBridge.isBagEnabled()) {
             if (this.localCoins < amount) {
                 return false;
             }
-
             this.localCoins -= amount;
             this.renderCoins();
             return true;
         }
 
-        if (this.getDisplayedCoins() < amount) {
+        // 在线模式：先调API扣费，成功后才返回true
+        try {
+            const result = await GgemuBridge.useCoins(amount);
+            this.renderCoins();
+            return result && result.success !== false;
+        } catch (error) {
+            console.warn('[Player] spend coins failed:', error && error.message ? error.message : error);
+            this.renderCoins();
             return false;
         }
-
-        this.pendingBagSpend += amount;
-        this.renderCoins();
-
-        GgemuBridge.useCoins(amount)
-            .catch((error) => {
-                console.warn('[GGEMU] spend coins failed:', error && error.message ? error.message : error);
-            })
-            .finally(() => {
-                this.pendingBagSpend = Math.max(0, this.pendingBagSpend - amount);
-                this.renderCoins();
-            });
-
-        return true;
     }
 
     addCoin(amount) {
@@ -164,13 +196,14 @@ class Player {
             return;
         }
 
+        // 先乐观显示，等API确认
         this.pendingBagReward += amount;
         this.renderCoins();
         AudioManager.playBubble();
 
         GgemuBridge.addCoins(amount)
             .catch((error) => {
-                console.warn('[GGEMU] add coins failed:', error && error.message ? error.message : error);
+                console.warn('[Player] add coins failed:', error && error.message ? error.message : error);
             })
             .finally(() => {
                 this.pendingBagReward = Math.max(0, this.pendingBagReward - amount);

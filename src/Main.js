@@ -160,7 +160,8 @@ const Game = {
 
         this.app.stage.on('pointerdown', (e) => {
             AudioManager.startAmbient();
-            Promise.resolve(this.player.fire(e.global)).catch((error) => {
+            // fire 是 async 的，先扣后射
+            this.player.fire(e.global).catch((error) => {
                 console.warn('Fire failed:', error);
             });
         });

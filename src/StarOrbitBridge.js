@@ -15,6 +15,103 @@ const StarOrbitBridge = {
 
     // 后端 API 地址（部署后替换为实际地址）
     API_BASE: window.STARORBIT_API_BASE || 'https://starorbit-api.onrender.com',
+    
+    // 本地存储键
+    STORAGE_KEYS: {
+        COINS: 'starorbit_coins',
+        USER_ID: 'starorbit_user_id',
+        FIRST_TIME: 'starorbit_first_time',
+        DAILY_BONUS: 'starorbit_daily_bonus',
+        LAST_SESSION: 'starorbit_last_session'
+    },
+    
+    // 游戏经济限制
+    LIMITS: {
+        MAX_OFFLINE_COINS: 10000, // 离线模式最大金币限制
+        MIN_COINS: 0,
+        INITIAL_BONUS: 200,
+        DAILY_BONUS: 30
+    },
+
+    // ── 本地存储管理 ──────────────────────────────────────────────
+    getLocalCoins() {
+        const stored = localStorage.getItem(this.STORAGE_KEYS.COINS);
+        const coins = stored ? parseInt(stored, 10) : 0;
+        
+        // 防作弊：限制本地金币上限
+        if (coins > this.LIMITS.MAX_OFFLINE_COINS) {
+            console.warn('[StarOrbit] 检测到异常金币数量，重置为上限:', this.LIMITS.MAX_OFFLINE_COINS);
+            this.setLocalCoins(this.LIMITS.MAX_OFFLINE_COINS);
+            return this.LIMITS.MAX_OFFLINE_COINS;
+        }
+        
+        return Math.max(coins, this.LIMITS.MIN_COINS);
+    },
+
+    setLocalCoins(amount) {
+        // 确保金币在合理范围内
+        const validAmount = Math.max(this.LIMITS.MIN_COINS, Math.min(amount, this.LIMITS.MAX_OFFLINE_COINS));
+        localStorage.setItem(this.STORAGE_KEYS.COINS, validAmount.toString());
+        
+        // 记录最后会话时间（用于异常检测）
+        localStorage.setItem(this.STORAGE_KEYS.LAST_SESSION, Date.now().toString());
+    },
+
+    getStoredUserId() {
+        return localStorage.getItem(this.STORAGE_KEYS.USER_ID);
+    },
+
+    setStoredUserId(userId) {
+        localStorage.setItem(this.STORAGE_KEYS.USER_ID, userId.toString());
+    },
+
+    isFirstTime() {
+        return !localStorage.getItem(this.STORAGE_KEYS.FIRST_TIME);
+    },
+
+    markNotFirstTime() {
+        localStorage.setItem(this.STORAGE_KEYS.FIRST_TIME, 'false');
+    },
+
+    generateDeviceId() {
+        // 生成基于浏览器特征的设备ID
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('StarOrbit Fishing', 2, 2);
+        
+        const fingerprint = [
+            navigator.userAgent,
+            navigator.language,
+            screen.width + 'x' + screen.height,
+            new Date().getTimezoneOffset(),
+            canvas.toDataURL()
+        ].join('|');
+        
+        // 简单hash
+        let hash = 0;
+        for (let i = 0; i < fingerprint.length; i++) {
+            const char = fingerprint.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // 转为32位整数
+        }
+        return Math.abs(hash);
+    },
+
+    detectAbnormalRestart() {
+        const lastSession = localStorage.getItem(this.STORAGE_KEYS.LAST_SESSION);
+        const now = Date.now();
+        
+        if (lastSession) {
+            const timeDiff = now - parseInt(lastSession, 10);
+            // 如果距离上次会话少于30秒，可能是异常重启
+            if (timeDiff < 30000) {
+                console.warn('[StarOrbit] 检测到频繁重启，距上次会话', timeDiff, 'ms');
+                // 可以在这里添加更严格的限制，比如临时冻结账户
+            }
+        }
+    },
 
     // ── 初始化入口 ──────────────────────────────────────────────
     async init(config) {
@@ -27,10 +124,16 @@ const StarOrbitBridge = {
                 this.tgUser = tg.initDataUnsafe?.user || null;
             }
 
-            // 2. 如果没有 Telegram 环境（本地开发），用 mock 用户
+            // 2. 如果没有 Telegram 环境（本地开发），生成设备ID用户
             if (!this.tgUser) {
-                console.warn('[StarOrbit] Telegram WebApp 不可用，使用 mock 用户');
-                this.tgUser = { id: 0, first_name: '游客', username: 'guest' };
+                console.warn('[StarOrbit] Telegram WebApp 不可用，使用设备ID用户');
+                const deviceId = this.generateDeviceId();
+                this.tgUser = { 
+                    id: deviceId, 
+                    first_name: '游客' + (deviceId % 1000), 
+                    username: 'guest_' + deviceId 
+                };
+                this.setStoredUserId(deviceId);
             }
 
             // 3. 登录 / 注册，获取初始金币
@@ -43,11 +146,41 @@ const StarOrbitBridge = {
             console.log(`[StarOrbit] 初始化完成，用户: ${this.tgUser.first_name}，金币: ${this.coins}`);
         } catch (err) {
             console.warn('[StarOrbit] 初始化失败（降级本地模式）:', err);
-            this.coins = 200; // 降级：给 200 离线金币
-            this.isReady = true;
+            await this.initOfflineMode();
         }
 
         this.emitCoins();
+    },
+
+    async initOfflineMode() {
+        console.log('[StarOrbit] 启动离线模式');
+        
+        // 确保有用户身份
+        if (!this.tgUser) {
+            const deviceId = this.generateDeviceId();
+            this.tgUser = { 
+                id: deviceId, 
+                first_name: '游客' + (deviceId % 1000), 
+                username: 'guest_' + deviceId 
+            };
+            this.setStoredUserId(deviceId);
+        }
+
+        // 检查是否首次使用
+        if (this.isFirstTime()) {
+            console.log('[StarOrbit] 离线模式：首次用户，赠送初始金币');
+            this.coins = this.LIMITS.INITIAL_BONUS;
+            this.markNotFirstTime();
+        } else {
+            // 恢复上次的金币余额
+            this.coins = this.getLocalCoins();
+            console.log('[StarOrbit] 离线模式：恢复金币余额', this.coins);
+            
+            // 异常检测：检查是否在短时间内多次重启
+            this.detectAbnormalRestart();
+        }
+
+        this.isReady = true;
     },
 
     // ── 登录 / 注册 ─────────────────────────────────────────────
@@ -98,6 +231,7 @@ const StarOrbitBridge = {
                 // 降级到本地模式：直接扣除金币
                 if (this.coins >= amount) {
                     this.coins -= amount;
+                    this.setLocalCoins(this.coins); // 同步到本地存储
                     this.emitCoins();
                     return { coins: this.coins, success: true };
                 } else {
@@ -121,6 +255,7 @@ const StarOrbitBridge = {
                 console.warn('[StarOrbit] addCoins API失败，降级本地模式:', err);
                 // 降级到本地模式：直接增加金币
                 this.coins += amount;
+                this.setLocalCoins(this.coins); // 同步到本地存储
             }
 
             this.emitCoins();
@@ -150,6 +285,9 @@ const StarOrbitBridge = {
     },
 
     emitCoins() {
+        // 自动保存金币到本地存储
+        this.setLocalCoins(this.coins);
+        
         const state = this.getBagState();
         for (const fn of this.coinListeners) fn(state);
     },
